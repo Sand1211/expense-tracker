@@ -1,0 +1,3591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width,
+                   initial-scale=1.0">
+
+	<title>
+		Expense Tracker
+	</title>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+	<style>
+		.dark-mode {
+
+			background-color: #121212 !important;
+
+			color: white !important;
+		}
+
+		.dark-mode .card {
+
+			background-color: #1e1e1e !important;
+
+			color: white !important;
+		}
+
+		.dark-mode .table {
+
+			color: white !important;
+		}
+
+		.dark-mode .table th,
+		.dark-mode .table td {
+
+			border-color: #444 !important;
+		}
+
+		.dark-mode .form-control,
+		.dark-mode .form-select {
+
+			background-color: #2b2b2b !important;
+
+			color: white !important;
+
+			border-color: #555 !important;
+		}
+
+		.dark-mode .form-control::placeholder {
+
+			color: #ccc !important;
+		}
+
+		.dark-mode .navbar {
+
+			background-color: black !important;
+		}
+
+		.dark-mode .modal-content {
+
+			background-color: #1e1e1e !important;
+
+			color: white !important;
+		}
+
+		.card-body h5 {
+			margin-bottom: 0;
+		}
+
+		#budgetExpenseChart {
+			height: 300px !important;
+		}
+
+		#budgetStatus,
+		#projectedSpend,
+		#dailyBudgetLeft,
+		#remainingBudget {
+			margin-top: 5px;
+		}
+
+
+		body,
+		.card,
+		.table,
+		.form-control,
+		.form-select,
+		.navbar,
+		.modal-content {
+
+			transition:
+				background-color 0.3s ease,
+				color 0.3s ease,
+				border-color 0.3s ease;
+		}
+	</style>
+</head>
+
+<!-- SETTINGS MODAL -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+
+			<div class="modal-header">
+				<h5 class="modal-title">Profile Settings</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+
+			<div class="modal-body">
+
+				<div class="mb-3">
+					<label>Username</label>
+					<input type="text" id="settingsUsername" class="form-control">
+				</div>
+
+				<div class="mb-3 text-center">
+
+					<img id="previewImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="100"
+						height="100" class="rounded-circle mb-2" style="object-fit:cover; border:3px solid #ddd;">
+
+					<input type="file" id="profileImage" class="form-control" accept="image/*">
+
+				</div>
+
+			</div>
+
+			<div class="modal-footer">
+				<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				<button class="btn btn-primary" onclick="saveSettings()">Save</button>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<body class="bg-light">
+
+	<!-- NAVBAR -->
+
+	<nav class="navbar navbar-dark bg-dark px-3 py-2">
+
+		<!-- LEFT LOGO -->
+
+		<span class="navbar-brand mb-0 h1">
+			Expense Tracker
+		</span>
+
+		<!-- RIGHT SECTION -->
+
+		<div class="d-flex align-items-center">
+
+			<!-- DARK MODE BUTTON -->
+
+			<button class="btn btn-outline-light btn-sm me-3" onclick="toggleDarkMode()">
+				<i class="bi bi-moon-fill"></i>
+			</button>
+
+			<!-- NOTIFICATION BELL -->
+
+			<div class="dropdown me-3">
+
+				<button class="btn btn-outline-light btn-sm position-relative" data-bs-toggle="dropdown">
+
+					<i class="bi bi-bell-fill"></i>
+
+					<span id="notificationCount"
+						class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+
+						0
+
+					</span>
+
+				</button>
+
+				<ul class="dropdown-menu dropdown-menu-end" style="width:400px;">
+
+					<li>
+
+						<div class="d-flex
+						           justify-content-between
+						           align-items-center
+						           px-3
+						           py-2">
+
+							<strong>
+
+								Notifications
+
+							</strong>
+
+							<a href="#" style="font-size:12px" onclick="markAllRemindersRead()">
+
+								Mark All Read
+
+							</a>
+
+						</div>
+
+					</li>
+
+					<li>
+
+						<div id="notificationList" style="
+			                    max-height:300px;
+			                    overflow-y:auto;">
+
+							<div class="dropdown-item text-muted">
+
+								No notifications
+
+							</div>
+
+						</div>
+
+					</li>
+
+				</ul>
+
+			</div>
+
+			<!-- PROFILE DROPDOWN -->
+
+			<div class="dropdown">
+
+				<button class="btn btn-dark btn-sm dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
+
+					<img id="navbarProfileImage" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+						width="32" height="32" class="rounded-circle me-2" style="
+	                        object-fit:cover;
+	                        border:2px solid white;
+	                    ">
+					<span id="loggedInUser"></span>
+				</button>
+
+				<ul class="dropdown-menu dropdown-menu-end">
+					<li>
+						<a class="dropdown-item" href="#" onclick="openSettings()">
+							<i class="bi bi-gear me-2"></i>
+							Settings
+						</a>
+
+					</li>
+
+					<li>
+						<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#budgetModal"
+							onclick="loadBudgetForMonth()">
+							<i class="bi bi-wallet2 me-2"></i>
+							Budget Management
+
+						</a>
+					</li>
+
+					<li>
+						<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#recurringExpenseModal"
+							onclick="loadRecurringExpenses()">
+
+							<i class="bi bi-arrow-repeat me-2"></i>
+							Recurring Expenses
+
+						</a>
+					</li>
+
+					<li>
+
+						<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#paymentCenterModal">
+
+							<i class="bi bi-calendar-check me-2"></i>
+
+							Payment Center
+
+						</a>
+
+					</li>
+					
+
+
+					<li>
+						<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+							<i class="bi bi-key me-2"></i>
+							Change Password
+						</a>
+					</li>
+					<li>
+						<a class="dropdown-item text-danger" href="#" onclick="logout()">
+							<i class="bi bi-box-arrow-right me-2"></i>
+							Logout
+						</a>
+					</li>
+
+				</ul>
+
+			</div>
+
+		</div>
+
+	</nav>
+
+
+	<!-- MAIN CONTAINER -->
+
+	<div class="container-fluid px-4 mt-3">
+
+
+		<!-- DASHBOARD CARDS -->
+
+		<div class="row mb-4 g-3">
+
+			<!-- MONTHLY BUDGET -->
+
+			<div class="col">
+
+				<div class="card shadow-sm border-0 h-100">
+
+					<div class="card-body text-center">
+
+						<h6 class="text-muted">
+							Monthly Budget
+						</h6>
+
+						<h4 class="fw-bold text-info" id="monthlyBudget">
+
+							N/A
+
+						</h4>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<!-- MONTHLY SAVINGS -->
+
+			<div class="col">
+
+				<div class="card shadow-sm border-0 h-100">
+
+					<div class="card-body text-center">
+
+						<h6 class="text-muted">
+							Remaining Budget
+						</h6>
+
+						<h4 class="fw-bold" id="monthlySavings">
+
+							₹0
+
+						</h4>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+
+			<!-- THIS MONTH -->
+
+			<div class="col">
+
+				<div class="card shadow-sm border-0 h-100">
+
+					<div class="card-body text-center">
+
+						<h6 class="text-muted">
+							This Month
+						</h6>
+
+						<h4 class="fw-bold text-primary" id="monthlyExpense">
+
+							₹0
+
+						</h4>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<!-- TOTAL RECORDS -->
+
+			<div class="col">
+
+				<div class="card shadow-sm border-0 h-100">
+
+					<div class="card-body text-center">
+
+						<h6 class="text-muted">
+							Total Records
+						</h6>
+
+						<h4 class="fw-bold text-success" id="totalRecords">
+
+							0
+
+						</h4>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<!-- TOP CATEGORY -->
+
+			<div class="col">
+
+				<div class="card shadow-sm border-0 h-100">
+
+					<div class="card-body text-center">
+
+						<h6 class="text-muted">
+							Top Category
+						</h6>
+
+						<h4 class="fw-bold text-warning" id="topCategory">
+
+							N/A
+
+						</h4>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+
+
+		<div id="budgetAlertContainer">
+
+		</div>
+
+
+
+
+		<!-- BUDGET PROGRESS -->
+
+		<div class="card shadow-sm border-0 mb-4">
+
+			<div class="card-body">
+
+				<div class="d-flex
+		                    justify-content-between
+		                    align-items-center
+		                    mb-2">
+
+					<h6 class="mb-0">
+
+						Budget Usage
+
+					</h6>
+
+					<span id="budgetProgressText" class="fw-bold">
+
+						₹0 / ₹0
+
+					</span>
+
+				</div>
+
+				<div class="progress" style="height: 22px;">
+
+					<div id="budgetProgressBar"
+						class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar"
+						style="width: 0%">
+
+						0%
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<div class="card shadow-sm border-0 mt-3 mb-4">
+
+			<div class="card-body">
+
+				<h5 class="mb-3">
+					💰 Savings Insights
+				</h5>
+
+				<div class="row">
+
+					<div class="col-md-3">
+						<strong>Remaining</strong>
+						<h5 id="remainingBudget">
+							₹0
+						</h5>
+					</div>
+
+					<div class="col-md-3">
+						<strong>Daily Budget Left</strong>
+						<h5 id="dailyBudgetLeft">
+							₹0
+						</h5>
+					</div>
+
+					<div class="col-md-3">
+						<strong>Projected Spend</strong>
+						<h5 id="projectedSpend">
+							₹0
+						</h5>
+					</div>
+
+					<div class="col-md-3">
+						<strong>Status</strong>
+						<h5 id="budgetStatus">
+							-
+						</h5>
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<div class="card shadow-sm border-0 mb-4">
+
+			<div class="card-body">
+
+				<h5 class="mb-3">
+					📊 Budget vs Expense Trend
+				</h5>
+
+				<canvas id="budgetExpenseChart"></canvas>
+
+			</div>
+
+		</div>
+
+
+
+
+
+		<!-- FORM + CHART -->
+
+		<div class="row g-3 align-items-stretch">
+
+
+
+			<!-- LEFT FORM -->
+
+			<div class="col-md-5">
+
+				<div class="card p-3 shadow-sm" style="height:470px;">
+
+					<h4 class="mb-2">
+						Add Expense
+					</h4>
+
+					<form id="expenseForm">
+
+						<input type="hidden" id="expenseId">
+
+						<div class="mb-2">
+
+							<label class="form-label">
+								Amount
+							</label>
+
+							<input type="number" class="form-control" style="height:38px;" id="amount" required>
+
+						</div>
+
+						<div class="mb-2">
+
+							<label class="form-label">
+								Category
+							</label>
+
+							<select class="form-select" style="height:38px;" id="category" required>
+
+								<option value="">
+									Select Category
+								</option>
+
+								<option value="FOOD">
+									FOOD
+								</option>
+
+								<option value="ONLINE TRANSFER">
+									ONLINE TRANSFER
+								</option>
+
+								<option value="TRAVEL">
+									TRAVEL
+								</option>
+
+								<option value="SHOPPING">
+									SHOPPING
+								</option>
+
+								<option value="BILLS">
+									BILLS
+								</option>
+
+								<option value="HEALTH">
+									HEALTH
+								</option>
+
+								<option value="ENTERTAINMENT">
+									ENTERTAINMENT
+								</option>
+
+								<option value="EDUCATION">
+									EDUCATION
+								</option>
+
+								<option value="CREDIT CARD">
+									CREDIT CARD
+								</option>
+
+								<option value="LOAN">
+									LOAN
+								</option>
+
+								<option value="UTILITY">
+									UTILITY
+								</option>
+								<option value="OTHERS">
+									OTHERS
+								</option>
+
+							</select>
+
+						</div>
+
+
+
+						<div class="mb-2">
+
+							<label class="form-label">
+								Description
+							</label>
+
+							<input type="text" class="form-control" style="height:38px;" id="description">
+
+						</div>
+
+						<div class="mb-2">
+
+							<label class="form-label">
+								Expense Date
+							</label>
+
+							<input type="date" class="form-control" style="height:38px;" id="expenseDate" required>
+
+						</div>
+
+						<button type="submit" class="btn btn-primary btn-sm w-100">
+
+							Save Expense
+
+						</button>
+
+					</form>
+
+				</div>
+
+			</div>
+
+
+
+			<!-- RIGHT CHART -->
+
+			<div class="col-md-7">
+
+				<div class="card shadow-sm" style="height:470px;">
+
+					<div class="card-body">
+
+
+
+						<!-- FILTERS -->
+
+						<div class="row mb-3">
+
+							<div class="col-md-6">
+
+								<select id="monthFilter" class="form-select form-select-sm"
+									onchange="loadExpenseChart()">
+
+									<option value="">
+										All Months
+									</option>
+
+									<option value="1">January</option>
+									<option value="2">February</option>
+									<option value="3">March</option>
+									<option value="4">April</option>
+									<option value="5">May</option>
+									<option value="6">June</option>
+									<option value="7">July</option>
+									<option value="8">August</option>
+									<option value="9">September</option>
+									<option value="10">October</option>
+									<option value="11">November</option>
+									<option value="12">December</option>
+
+								</select>
+
+							</div>
+
+							<div class="col-md-6">
+
+								<select id="yearFilter" class="form-select form-select-sm"
+									onchange="loadExpenseChart()">
+
+									<option value="2025">
+										2025
+									</option>
+
+									<option value="2026" selected>
+										2026
+									</option>
+
+									<option value="2027">
+										2027
+									</option>
+									<option value="2028">
+										2028
+									</option>
+									<option value="2029">
+										2029
+									</option>
+
+								</select>
+
+							</div>
+
+						</div>
+
+
+
+						<!-- TITLE -->
+
+						<div class="d-flex
+                                    justify-content-between
+                                    align-items-center">
+
+							<h4>
+								Expense Overview
+							</h4>
+
+							<h5 class="text-success">
+
+								₹ <span id="totalExpense">
+
+									0
+
+								</span>
+
+							</h5>
+
+						</div>
+
+
+
+						<!-- CHART -->
+
+						<div style="
+                                    width:100%;
+                                    max-width:320px;
+                                    margin:auto;
+                                    padding-top:20px;">
+
+							<canvas id="expenseChart" style="
+                                    max-width:280px;
+                                    max-height:280px;
+                                    margin:auto;">
+							</canvas>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+
+
+
+
+
+		<!-- SEARCH -->
+
+		<div class="row mt-4">
+
+			<div class="col-md-10">
+
+				<input type="text" id="searchText" class="form-control" style="height:38px;"
+					placeholder="Search category or description">
+
+			</div>
+
+			<div class="col-md-2">
+
+				<button class="btn btn-primary btn-sm w-100" onclick="searchExpenses()">
+
+					Search
+
+				</button>
+
+			</div>
+
+		</div>
+
+
+
+
+		<!-- TABLE -->
+
+		<div class="mt-3">
+
+
+			<div class="d-flex
+			            justify-content-between
+			            align-items-center">
+
+				<h4>
+					Expenses
+				</h4>
+
+				<button class="btn btn-success btn-sm" onclick="exportExpenses()">
+
+					Export Excel
+
+				</button>
+
+			</div>
+
+
+
+			<table class="table
+                           table-bordered
+                           table-hover
+                           table-sm
+                           small">
+
+				<thead>
+
+					<tr>
+
+						<th>S.No</th>
+						<th>Amount</th>
+						<th>Category</th>
+						<th>Description</th>
+						<th>Date</th>
+						<th>Action</th>
+
+					</tr>
+
+				</thead>
+
+				<tbody id="expenseTableBody">
+
+				</tbody>
+
+			</table>
+
+
+
+
+
+			<!-- PAGINATION -->
+
+			<div class="d-flex
+                        justify-content-between
+                        align-items-center
+                        mt-3">
+
+				<button class="btn btn-secondary" onclick="previousPage()">
+
+					Previous
+
+				</button>
+
+				<span id="pageInfo" class="fw-bold">
+
+					Page 1
+
+				</span>
+
+				<button class="btn btn-secondary" onclick="nextPage()">
+
+					Next
+
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+	const token = sessionStorage.getItem('token');
+
+	if (!token) {
+		window.location.href = '/login.html';
+	}
+
+	const username = sessionStorage.getItem('username');
+	document.getElementById('loggedInUser').innerText = username;
+
+	const displayName = sessionStorage.getItem('name');
+	document.getElementById('loggedInUser').innerText = displayName;
+	// Load saved profile image
+
+	const profileImage =
+		sessionStorage.getItem("profileImage");
+
+	if (profileImage) {
+
+		document.getElementById("navbarProfileImage").src =
+			"/profile-images/" + profileImage +
+			"?t=" + new Date().getTime();
+	}
+
+	let expenseChart = null;
+
+	let budgetExpenseChart;
+
+	let editingRecurringId = null;
+
+	let currentPage = 0;
+	const pageSize = 15;
+
+	// ================================
+	// GLOBAL FILTER STATE (FIXED)
+	// ================================
+	function getFilters() {
+		return {
+			month: document.getElementById('monthFilter').value,
+			year: document.getElementById('yearFilter').value,
+			searchText: document.getElementById('searchText').value
+		};
+	}
+
+	// ================================
+	// GLOBAL refresh dahsboard (FIXED)
+	// ================================
+
+	async function refreshDashboard() {
+
+		await loadExpenses();
+
+		await loadExpenseChart();
+		await loadBudgetExpenseTrend();
+
+		await loadUnreadReminderCount();
+
+		await loadNotifications();
+	}
+
+	// ================================
+	// LOAD EXPENSES (FIXED)
+	// ================================
+	async function loadExpenses() {
+
+		const filters = getFilters();
+
+		const response = await fetch('/expenses/search', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${token}`
+			},
+			body: JSON.stringify({
+				page: currentPage,
+				size: pageSize,
+				month: filters.month || null,
+				year: filters.year || null,
+				searchText: filters.searchText || null
+			})
+		});
+
+		if (response.status === 401 || response.status === 403) {
+			alert("Session expired. Please login again.");
+			sessionStorage.clear();
+			window.location.href = '/login.html';
+			return;
+		}
+
+		const result = await response.json();
+		const data = result.expenses || [];
+
+		let rows = '';
+		let total = 0;
+
+		data.forEach((expense, index) => {
+
+			total += expense.amount;
+
+			rows += `
+        <tr>
+            <td>${(currentPage * pageSize) + index + 1}</td>
+            <td>${expense.amount}</td>
+            <td>${expense.category}</td>
+            <td>${expense.description}</td>
+            <td>${expense.expenseDate}</td>
+            <td>
+                <button class="btn btn-warning btn-sm"
+                    onclick="editExpense(
+                        '${expense.id}',
+                        '${expense.category}',
+                        '${expense.description}',
+                        '${expense.amount}',
+                        '${expense.expenseDate}')">
+                    Edit
+                </button>
+
+                <button class="btn btn-danger btn-sm"
+                    onclick="deleteExpense(${expense.id})">
+                    Delete
+                </button>
+            </td>
+        </tr>`;
+		});
+
+		document.getElementById('expenseTableBody').innerHTML = rows;
+		document.getElementById('totalExpense').innerText = total.toFixed(2);
+		document.getElementById('totalRecords').innerText = result.totalRecords || 0;
+		document.getElementById('pageInfo').innerText = `Page ${currentPage + 1}`;
+	}
+
+	// ================================
+	// SEARCH (FIXED)
+	// ================================
+	async function searchExpenses() {
+		currentPage = 0;
+		refreshDashboard();
+	}
+
+	// ================================
+	// DELETE
+	// ================================
+	async function deleteExpense(id) {
+
+		if (!confirm("Do you want to delete this expense?")) return;
+
+		await fetch(`/expenses/${id}`, {
+			method: 'DELETE',
+			headers: {'Authorization': `Bearer ${token}`}
+		});
+
+		alert("Expense deleted successfully");
+
+		refreshDashboard();
+	}
+
+	// ================================
+	// EDIT
+	// ================================
+	function editExpense(id, category, description, amount, expenseDate) {
+		document.getElementById('expenseId').value = id;
+		document.getElementById('category').value = category;
+		document.getElementById('description').value = description;
+		document.getElementById('amount').value = amount;
+		document.getElementById('expenseDate').value = expenseDate;
+	}
+
+	// ================================
+	// SAVE
+	// ================================
+	document.getElementById('expenseForm').addEventListener('submit', async function (e) {
+
+		e.preventDefault();
+
+		const expense = {
+			amount: document.getElementById('amount').value,
+			category: document.getElementById('category').value,
+			description: document.getElementById('description').value,
+			expenseDate: document.getElementById('expenseDate').value
+		};
+
+		const expenseId = document.getElementById('expenseId').value;
+
+		let url = '/expenses';
+		let method = 'POST';
+
+		if (expenseId) {
+			url = `/expenses/${expenseId}`;
+			method = 'PUT';
+		}
+
+		await fetch(url, {
+			method,
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${token}`
+			},
+			body: JSON.stringify(expense)
+		});
+
+		alert("Expense saved successfully");
+
+		this.reset();
+		document.getElementById('expenseId').value = '';
+
+		refreshDashboard();
+	});
+
+	// ================================
+	// FIXED CHART (uses SAME FILTERS)
+	// ================================
+
+	async function loadExpenseChart() {
+
+		const filters = getFilters();
+
+		const response = await fetch(
+			`/expenses/summary?month=${filters.month}&year=${filters.year}`,
+			{
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			}
+		);
+
+
+
+		// SESSION EXPIRED
+
+		if (response.status === 401 ||
+			response.status === 403) {
+
+			alert(
+				"Session expired. Please login again."
+			);
+
+			sessionStorage.clear();
+
+			window.location.href =
+				'/login.html';
+
+			return;
+		}
+
+
+
+		const data =
+			await response.json();
+
+
+
+
+
+
+
+
+
+		// MONTH TOTAL
+
+		document.getElementById(
+			'monthlyExpense'
+		).innerText =
+			`₹${(data.grandTotal || 0).toFixed(2)}`;
+
+
+
+		// TOP CATEGORY
+
+		let topCategory = "N/A";
+		let maxAmount = 0;
+
+		(data.summary || []).forEach(item => {
+
+			if (item.totalAmount > maxAmount) {
+
+				maxAmount =
+					item.totalAmount;
+
+				topCategory =
+					item.category;
+			}
+		});
+
+		document.getElementById(
+			'topCategory'
+		).innerText = topCategory;
+
+
+
+		// =====================================
+		// BUDGET FEATURE
+		// =====================================
+
+		try {
+
+			const progressBar =
+				document.getElementById(
+					'budgetProgressBar'
+				);
+
+			const progressText =
+				document.getElementById(
+					'budgetProgressText'
+				);
+
+			const alertContainer =
+				document.getElementById(
+					'budgetAlertContainer'
+				);
+
+
+
+			// RESET EVERYTHING FIRST
+
+			progressBar.style.width = '0%';
+
+			progressBar.innerText = '0%';
+
+			progressText.innerText =
+				'No Budget Set';
+
+			alertContainer.innerHTML = '';
+
+
+
+			progressBar.classList.remove(
+				'bg-success',
+				'bg-warning',
+				'bg-danger',
+				'bg-secondary'
+			);
+
+
+
+			progressBar.classList.add(
+				'bg-secondary'
+			);
+
+
+
+			// ONLY LOAD BUDGET
+			// IF MONTH SELECTED
+
+			if (filters.month) {
+
+				const budgetResponse =
+					await fetch(
+						`/budget?month=${filters.month}&year=${filters.year}`,
+						{
+							headers: {
+								'Authorization':
+									`Bearer ${token}`
+							}
+						});
+
+				const budgetAmount =
+					await budgetResponse.json();
+
+
+
+				// SHOW BUDGET
+
+				document.getElementById(
+					'monthlyBudget'
+				).innerText =
+					`₹${(budgetAmount || 0).toFixed(2)}`;
+
+				const savingsElement =
+					document.getElementById(
+						'monthlySavings'
+					);
+
+				savingsElement.innerText =
+					`₹${data.monthlySavings.toLocaleString()}`;
+
+				document.getElementById(
+					'remainingBudget'
+				).innerText =
+					`₹${(data.remainingBudget || 0)
+						.toLocaleString()}`;
+
+				if (
+					filters.month &&
+					(
+						parseInt(filters.month) !== new Date().getMonth() + 1 ||
+						parseInt(filters.year) !== new Date().getFullYear()
+					)
+				) {
+
+					document.getElementById(
+						'dailyBudgetLeft'
+					).innerText = "N/A";
+
+				}
+				else {
+
+					document.getElementById(
+						'dailyBudgetLeft'
+					).innerText =
+						`₹${(data.dailyBudgetLeft || 0).toFixed(0)}`;
+				}
+
+				document.getElementById(
+					'projectedSpend'
+				).innerText =
+					`₹${(data.projectedSpend || 0)
+						.toFixed(0)}`;
+
+				const statusElement =
+					document.getElementById(
+						'budgetStatus'
+					);
+
+				statusElement.innerText =
+					data.budgetStatus || "-";
+
+				statusElement.classList.remove(
+					'text-success',
+					'text-warning',
+					'text-danger',
+					'text-muted'
+				);
+
+				if (
+					data.budgetStatus === "On Track" ||
+					data.budgetStatus === "Within Budget"
+				) {
+
+					statusElement.classList.add(
+						'text-success'
+					);
+
+				}
+				else if (
+					data.budgetStatus === "Overspending" ||
+					data.budgetStatus === "Budget Exceeded"
+				) {
+
+					statusElement.classList.add(
+						'text-danger'
+					);
+
+				}
+				else {
+
+					statusElement.classList.add(
+						'text-muted'
+					);
+				}
+
+
+				// IF BUDGET EXISTS
+
+				if (budgetAmount > 0) {
+
+					const percentage =
+						(data.grandTotal / budgetAmount) * 100;
+
+					const safePercentage =
+						Math.min(percentage, 100);
+
+
+
+					progressBar.style.width =
+						`${safePercentage}%`;
+
+					progressBar.innerText =
+						`${percentage.toFixed(0)}%`;
+
+
+
+					progressText.innerText =
+						`₹${data.grandTotal.toFixed(2)}
+	                     / ₹${budgetAmount.toFixed(2)}`;
+
+
+
+					// REMOVE DEFAULT
+
+					progressBar.classList.remove(
+						'bg-secondary'
+					);
+
+
+
+					// COLORS
+
+					if (percentage >= 100) {
+
+						progressBar.classList.add(
+							'bg-danger'
+						);
+
+						alertContainer.innerHTML = `
+
+	                        <div class="alert alert-danger mt-3">
+
+	                            ⚠ Budget exceeded!
+	                            You crossed your monthly budget.
+
+	                        </div>
+	                    `;
+					}
+
+					else if (percentage >= 80) {
+
+						progressBar.classList.add(
+							'bg-warning'
+						);
+
+						alertContainer.innerHTML = `
+
+	                        <div class="alert alert-warning mt-3">
+
+	                            ⚠ Warning!
+	                            You already used
+	                            ${percentage.toFixed(0)}%
+	                            of your budget.
+
+	                        </div>
+	                    `;
+					}
+
+					else {
+
+						progressBar.classList.add(
+							'bg-success'
+						);
+					}
+				}
+
+			}
+
+
+
+			// ALL MONTH CASE
+
+			else {
+
+
+				document.getElementById(
+					'monthlyBudget'
+				).innerText = 'N/A';
+
+				document.getElementById(
+					'monthlySavings'
+				).innerText = 'N/A';
+
+				const usage =
+					document.getElementById(
+						'budgetUsagePercent'
+					);
+
+				if (usage) {
+					usage.innerText = 'N/A';
+				}
+
+
+			}
+
+		}
+
+		catch (e) {
+
+			console.log(
+				"Budget Error",
+				e
+			);
+		}
+
+
+
+		// =====================================
+		// PIE CHART
+		// =====================================
+
+		const categories =
+			(data.summary || [])
+				.map(i => i.category);
+
+		const amounts =
+			(data.summary || [])
+				.map(i => i.totalAmount);
+
+
+
+		if (expenseChart)
+			expenseChart.destroy();
+
+
+
+		const ctx =
+			document.getElementById(
+				'expenseChart'
+			).getContext('2d');
+
+
+
+		expenseChart = new Chart(ctx, {
+
+			type: 'pie',
+
+			data: {
+
+				labels: categories,
+
+				datasets: [{
+
+					data: amounts,
+
+					borderWidth: 1
+				}]
+			},
+
+			options: {
+
+				responsive: true,
+
+				maintainAspectRatio: true
+			}
+		});
+		await loadUpcomingPayments();
+	}
+
+
+
+	// ================================
+	// PAGINATION
+	// ================================
+	function nextPage() {
+		currentPage++;
+		loadExpenses();
+	}
+
+	function previousPage() {
+		if (currentPage > 0) {
+			currentPage--;
+			loadExpenses();
+		}
+	}
+
+	// ================================
+	// FILTER CHANGE FIX (IMPORTANT)
+	// ================================
+	document.getElementById('monthFilter').addEventListener('change', () => {
+		currentPage = 0;
+		refreshDashboard();
+	});
+
+	document.getElementById('yearFilter').addEventListener('change', () => {
+		currentPage = 0;
+		refreshDashboard();
+	});
+
+	// ================================
+	// LOGOUT
+	// ================================
+	function logout() {
+
+		sessionStorage.removeItem('token');
+		sessionStorage.removeItem('username');
+		sessionStorage.removeItem('profileImage');
+
+		window.location.href = '/login.html';
+	}
+
+	async function changePassword() {
+
+		const currentPassword =
+			document.getElementById(
+				'currentPassword'
+			).value;
+
+		const newPassword =
+			document.getElementById(
+				'newPassword'
+			).value;
+
+		const confirmPassword =
+			document.getElementById(
+				'confirmPassword'
+			).value;
+
+
+
+		// VALIDATION
+
+		if (!currentPassword ||
+			!newPassword ||
+			!confirmPassword) {
+
+			alert(
+				"Please fill all fields"
+			);
+
+			return;
+		}
+
+
+
+		if (newPassword !== confirmPassword) {
+
+			alert(
+				"New passwords do not match"
+			);
+
+			return;
+		}
+
+
+
+		const token =
+			sessionStorage.getItem(
+				'token'
+			);
+
+
+
+		const response =
+			await fetch(
+				'/auth/change-password',
+				{
+
+					method: 'PUT',
+
+					headers: {
+
+						'Content-Type':
+							'application/json',
+
+						'Authorization':
+							`Bearer ${token}`
+					},
+
+					body: JSON.stringify({
+
+						currentPassword:
+							currentPassword,
+
+						newPassword:
+							newPassword
+					})
+				});
+
+
+
+		const message =
+			await response.text();
+
+
+
+		if (!response.ok) {
+
+			alert(message);
+
+			return;
+		}
+
+
+
+		alert(message);
+
+
+
+		// CLOSE MODAL
+
+		const modalElement =
+			document.getElementById(
+				'changePasswordModal'
+			);
+
+		const modal =
+			bootstrap.Modal.getInstance(
+				modalElement
+			);
+
+		modal.hide();
+
+		document.activeElement.blur();
+
+
+
+		// CLEAR FIELDS
+
+		document.getElementById(
+			'currentPassword'
+		).value = '';
+
+		document.getElementById(
+			'newPassword'
+		).value = '';
+
+		document.getElementById(
+			'confirmPassword'
+		).value = '';
+
+
+
+		// AUTO LOGOUT AFTER PASSWORD CHANGE
+
+		sessionStorage.clear();
+
+		window.location.href =
+			'/login.html';
+	}
+
+
+
+
+	// ================================
+	// EXPORT FIXED (USES FILTERS)
+	// ================================
+	async function exportExpenses() {
+
+		const filters = getFilters();
+
+		const url =
+			`/expenses/export?month=${filters.month}&year=${filters.year}&searchText=${filters.searchText}`;
+
+		const response = await fetch(url, {
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${token}`
+			}
+		});
+
+		if (response.status === 401 || response.status === 403) {
+			alert("Session expired. Please login again.");
+			sessionStorage.clear();
+			window.location.href = '/login.html';
+			return;
+		}
+
+		const blob = await response.blob();
+
+		const a = document.createElement('a');
+		a.href = window.URL.createObjectURL(blob);
+		a.download = 'expenses.xlsx';
+
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+	}
+
+	async function saveSettings() {
+
+		const username =
+			document.getElementById('settingsUsername').value;
+
+
+		const imageFile =
+			document.getElementById('profileImage').files[0];
+
+		if (!username || username.trim() === "") {
+			alert("Username is required");
+			return;
+		}
+
+
+		const formData = new FormData();
+
+		formData.append("username", username);
+
+		if (imageFile) {
+			formData.append("image", imageFile);
+		}
+
+		const response = await fetch('/auth/update-profile', {
+			method: 'PUT',
+			headers: {
+				'Authorization': `Bearer ${token}`
+			},
+			body: formData
+		});
+
+		if (!response.ok) {
+			alert("Profile update failed");
+			return;
+		}
+
+		const data = await response.json();
+
+		sessionStorage.setItem(
+			"username",
+			data.username
+		);
+
+		sessionStorage.setItem(
+			"profileImage",
+			data.profileImage || ''
+		);
+
+		document.getElementById("loggedInUser").innerText =
+			data.username;
+
+		if (data.profileImage) {
+
+			document.getElementById("navbarProfileImage").src =
+				"/profile-images/" + data.profileImage +
+				"?t=" + new Date().getTime();
+		}
+
+		alert("Profile updated successfully");
+
+		bootstrap.Modal
+			.getInstance(document.getElementById('settingsModal'))
+			.hide();
+	}
+
+	const profileImageInput =
+		document.getElementById('profileImage');
+
+	if (profileImageInput) {
+
+		profileImageInput.addEventListener(
+			'change',
+			function (e) {
+
+				const file = e.target.files[0];
+
+				if (!file) return;
+
+				const reader = new FileReader();
+
+				reader.onload = function (event) {
+
+					document.getElementById(
+						'previewImage'
+					).src = event.target.result;
+				};
+
+				reader.readAsDataURL(file);
+			}
+		);
+	}
+	function openSettings() {
+
+		document.getElementById('settingsUsername').value =
+			sessionStorage.getItem('username') || '';
+
+
+		// IMPORTANT FIX
+		document.getElementById('profileImage').value = '';
+
+		const profileImage =
+			sessionStorage.getItem('profileImage');
+
+		if (profileImage) {
+
+			document.getElementById('previewImage').src =
+				"/profile-images/" + profileImage +
+				"?t=" + new Date().getTime();
+
+		} else {
+
+			document.getElementById('previewImage').src =
+				'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+		}
+
+		const modal = new bootstrap.Modal(
+			document.getElementById('settingsModal')
+		);
+
+		modal.show();
+	}
+
+
+	// ================================
+	// INIT
+	// ================================
+	refreshDashboard();
+
+
+	function toggleDarkMode() {
+
+		document.body.classList.toggle(
+			'dark-mode'
+		);
+
+
+
+		const darkButtonIcon =
+			document.querySelector(
+				'.bi-moon-fill, .bi-sun-fill'
+			);
+
+
+
+		// DARK MODE ENABLED
+
+		if (document.body.classList.contains(
+			'dark-mode')) {
+
+			localStorage.setItem(
+				'theme',
+				'dark'
+			);
+
+
+
+			darkButtonIcon.classList.remove(
+				'bi-moon-fill'
+			);
+
+			darkButtonIcon.classList.add(
+				'bi-sun-fill'
+			);
+
+		}
+
+
+
+		// LIGHT MODE
+
+		else {
+
+			localStorage.setItem(
+				'theme',
+				'light'
+			);
+
+
+
+			darkButtonIcon.classList.remove(
+				'bi-sun-fill'
+			);
+
+			darkButtonIcon.classList.add(
+				'bi-moon-fill'
+			);
+		}
+	}
+
+
+
+	// LOAD SAVED THEME
+
+	window.addEventListener('load', () => {
+
+		const savedTheme =
+			localStorage.getItem(
+				'theme'
+			);
+
+
+
+		const darkButtonIcon =
+			document.querySelector(
+				'.bi-moon-fill'
+			);
+
+
+
+		if (savedTheme === 'dark') {
+
+			document.body.classList.add(
+				'dark-mode'
+			);
+
+
+
+			darkButtonIcon.classList.remove(
+				'bi-moon-fill'
+			);
+
+			darkButtonIcon.classList.add(
+				'bi-sun-fill'
+			);
+		}
+	});
+
+	<!-- BUDGET function -->
+	async function saveBudget() {
+
+		const month =
+			document.getElementById(
+				'budgetMonth'
+			).value;
+
+		const year =
+			document.getElementById(
+				'budgetYear'
+			).value;
+
+		const amount =
+			document.getElementById(
+				'budgetAmountInput'
+			).value;
+
+
+
+		if (!amount || amount <= 0) {
+
+			alert(
+				"Please enter valid budget amount"
+			);
+
+			return;
+		}
+
+
+
+		const response =
+			await fetch(
+				'/budget',
+				{
+
+					method: 'POST',
+
+					headers: {
+
+						'Content-Type':
+							'application/json',
+
+						'Authorization':
+							`Bearer ${token}`
+					},
+
+
+					body: JSON.stringify({
+
+						month: month,
+
+						year: year,
+
+						amount: amount,
+
+						applyToAllMonths:
+							document.getElementById(
+								'applyAllMonths'
+							).checked
+					})
+
+
+				});
+
+
+
+		const message =
+			await response.text();
+
+
+
+		if (!response.ok) {
+
+			alert(message);
+
+			return;
+		}
+
+		alert(
+			"Budget saved successfully"
+		);
+
+		// CLOSE MODAL
+
+		const modalElement =
+			document.getElementById(
+				'budgetModal'
+			);
+
+		const modal =
+			bootstrap.Modal.getInstance(
+				modalElement
+			);
+
+		modal.hide();
+
+		document.getElementById(
+			'applyAllMonths'
+		).checked = false;
+		// REFRESH DASHBOARD
+
+		loadExpenseChart();
+	}
+
+	async function loadBudgetExpenseTrend() {
+
+		const response =
+			await fetch(
+				'/expenses/budget-vs-expense',
+				{
+					headers: {
+						'Authorization':
+							`Bearer ${token}`
+					}
+				}
+			);
+
+		const data =
+			await response.json();
+
+		const months =
+			data.map(
+				item => item.month
+			);
+
+		const budgets =
+			data.map(
+				item => item.budget
+			);
+
+		const expenses =
+			data.map(
+				item => item.expense
+			);
+
+		if (budgetExpenseChart) {
+
+			budgetExpenseChart.destroy();
+		}
+
+		const ctx =
+			document.getElementById(
+				'budgetExpenseChart'
+			).getContext('2d');
+
+		budgetExpenseChart =
+			new Chart(ctx, {
+
+				type: 'bar',
+
+				data: {
+
+					labels: months,
+
+					datasets: [
+
+						{
+							label: 'Budget',
+							data: budgets
+						},
+
+						{
+							label: 'Expense',
+							data: expenses
+						}
+					]
+				},
+
+				options: {
+
+					responsive: true,
+
+					maintainAspectRatio: false
+				}
+			});
+	}
+
+	async function loadUpcomingPayments() {
+
+		const response =
+			await fetch(
+				'/recurring-expenses/upcoming',
+				{
+					headers: {
+						'Authorization':
+							`Bearer ${token}`
+					}
+				});
+
+		const payments =
+			await response.json();
+
+		const totalUpcoming =
+			payments.length;
+
+		const dueThisWeek =
+			payments.filter(
+				p =>
+					p.daysRemaining >= 0 &&
+					p.daysRemaining <= 7
+			).length;
+
+		const overdue =
+			payments.filter(
+				p =>
+					p.daysRemaining < 0
+			).length;
+
+		const totalAmountDue =
+			payments.reduce(
+				(sum, payment) =>
+					sum + payment.amount,
+				0
+			);
+
+		document.getElementById(
+			'modalTotalAmountDue'
+		).innerText =
+			`₹${totalAmountDue.toLocaleString()}`;
+
+
+		// ============================
+		// MODAL SUMMARY
+		// ============================
+
+		document.getElementById(
+			'modalTotalUpcomingCount'
+		).innerText =
+			totalUpcoming;
+
+		document.getElementById(
+			'modalDueThisWeekCount'
+		).innerText =
+			dueThisWeek;
+
+		document.getElementById(
+			'modalOverdueCount'
+		).innerText =
+			overdue;
+
+
+		// ============================
+		// CONTAINERS
+		// ============================
+
+		const modalContainer =
+			document.getElementById(
+				'modalUpcomingPaymentsContainer'
+			);
+
+		modalContainer.innerHTML = '';
+
+
+		// ============================
+		// EMPTY STATE
+		// ============================
+
+		if (payments.length === 0) {
+
+
+			modalContainer.innerHTML = `
+
+	            <div class="text-muted">
+
+	                No upcoming payments
+
+	            </div>
+
+	        `;
+
+			return;
+		}
+
+
+		// ============================
+		// PAYMENT LIST
+		// ============================
+
+		payments.forEach(payment => {
+
+			let badgeClass =
+				'bg-success';
+
+			let badgeText =
+				`Due in ${payment.daysRemaining} days`;
+
+
+			if (payment.daysRemaining < 0) {
+
+				badgeClass =
+					'bg-danger';
+
+				badgeText =
+					`Overdue by ${Math.abs(
+						payment.daysRemaining
+					)} days`;
+			}
+
+			else if (
+				payment.daysRemaining === 0
+			) {
+
+				badgeClass =
+					'bg-danger';
+
+				badgeText =
+					'Due Today';
+			}
+
+			else if (
+				payment.daysRemaining === 1
+			) {
+
+				badgeClass =
+					'bg-warning';
+
+				badgeText =
+					'Due Tomorrow';
+			}
+
+			else if (
+				payment.daysRemaining <= 7
+			) {
+
+				badgeClass =
+					'bg-warning';
+			}
+
+
+			const paymentCard = `
+
+			    <div class="card border-0 shadow-sm mb-2">
+
+			        <div class="card-body">
+
+			            <div class="d-flex
+			                        justify-content-between">
+
+			                <strong>
+
+			                    ${payment.name}
+
+			                </strong>
+
+			                <span class="badge ${badgeClass}">
+
+			                    ${badgeText}
+
+			                </span>
+
+			            </div>
+
+						<div class="mt-2">
+
+						    <h5 class="text-success mb-1">
+
+						        ₹${payment.amount.toLocaleString()}
+
+						    </h5>
+
+						</div>
+
+			            <small
+			                class="text-muted">
+
+							<span class="badge bg-light text-dark">
+
+							    ${payment.recurringType}
+
+							</span>
+
+			            </small>
+
+			        </div>
+
+			    </div>
+
+			`;
+
+
+
+			modalContainer.innerHTML +=
+				paymentCard;
+		});
+	}
+
+
+
+
+
+
+
+
+	function openBudgetModal() {
+
+		document.getElementById(
+			'budgetMonth'
+		).value =
+			new Date().getMonth() + 1;
+
+		document.getElementById(
+			'budgetYear'
+		).value =
+			new Date().getFullYear();
+
+		loadBudgetForMonth();
+	}
+	async function saveRecurringExpense() {
+
+		let url =
+			'/recurring-expenses';
+
+		let method =
+			'POST';
+
+		if (editingRecurringId) {
+
+			url =
+				`/recurring-expenses/${editingRecurringId}`;
+
+			method =
+				'PUT';
+		}
+
+		const response =
+			await fetch(url, {
+
+				method: method,
+
+				headers: {
+					'Content-Type':
+						'application/json',
+
+					'Authorization':
+						`Bearer ${token}`
+				},
+
+				body: JSON.stringify({
+
+					name:
+						document.getElementById(
+							'recurringName'
+						).value,
+
+					category:
+						document.getElementById(
+							'recurringCategory'
+						).value,
+
+					amount:
+						document.getElementById(
+							'recurringAmount'
+						).value,
+
+					dueDay:
+						document.getElementById(
+							'dueDay'
+						).value,
+
+					startDate:
+						document.getElementById(
+							'startDate'
+						).value,
+
+					endDate:
+						document.getElementById(
+							'endDate'
+						).value,
+
+					reminderDaysBefore:
+						document.getElementById(
+							'reminderDays'
+						).value,
+
+					variableAmount:
+						document.getElementById(
+							'variableAmount'
+						).checked,
+
+					autoAddExpense:
+						document.getElementById(
+							'autoAddExpense'
+						).checked,
+
+					active:
+						document.getElementById(
+							'activeStatus'
+						).checked,
+
+					recurringType:
+						document.getElementById(
+							'recurringType'
+						).value
+				})
+			});
+
+		const message =
+			await response.text();
+
+		alert(message);
+
+		editingRecurringId = null;
+
+
+		loadRecurringExpenses();
+
+		document.getElementById(
+			'recurringName'
+		).value = '';
+
+		document.getElementById(
+			'recurringCategory'
+		).value = '';
+
+		document.getElementById(
+			'recurringAmount'
+		).value = '';
+
+		document.getElementById(
+			'dueDay'
+		).value = '';
+
+		document.getElementById(
+			'reminderDays'
+		).value = '';
+
+		document.getElementById(
+			'startDate'
+		).value = '';
+
+		document.getElementById(
+			'endDate'
+		).value = '';
+
+		document.getElementById(
+			'variableAmount'
+		).checked = false;
+
+		document.getElementById(
+			'autoAddExpense'
+		).checked = false;
+
+		document.getElementById(
+			'activeStatus'
+		).checked = true;
+
+
+	}
+
+	function editRecurringExpense(
+		id,
+		name,
+		category,
+		amount,
+		type,
+		dueDay,
+		reminderDays,
+		startDate,
+		endDate,
+		variableAmount,
+		autoAddExpense,
+		active
+	) {
+
+		editingRecurringId = id;
+
+		document.getElementById(
+			'recurringName'
+		).value = name;
+
+		document.getElementById(
+			'recurringCategory'
+		).value = category;
+
+		document.getElementById(
+			'recurringAmount'
+		).value = amount;
+
+		document.getElementById(
+			'recurringType'
+		).value = type;
+
+		document.getElementById(
+			'dueDay'
+		).value = dueDay;
+
+		document.getElementById(
+			'reminderDays'
+		).value = reminderDays;
+
+		document.getElementById(
+			'startDate'
+		).value = startDate;
+
+		document.getElementById(
+			'endDate'
+		).value = endDate;
+
+		document.getElementById(
+			'variableAmount'
+		).checked = variableAmount;
+
+		document.getElementById(
+			'autoAddExpense'
+		).checked = autoAddExpense;
+
+		document.getElementById(
+			'activeStatus'
+		).checked = active;
+	}
+
+
+
+	async function loadRecurringExpenses() {
+
+		const response =
+			await fetch(
+				'/recurring-expenses',
+				{
+					headers: {
+						'Authorization':
+							`Bearer ${token}`
+					}
+				});
+
+		const data =
+			await response.json();
+
+		const tableBody =
+			document.getElementById(
+				'recurringExpenseTableBody'
+			);
+
+		tableBody.innerHTML = '';
+
+		data.forEach(expense => {
+
+			tableBody.innerHTML += `
+
+			<tr>
+
+			    <td>${expense.name}</td>
+
+			    <td>${expense.recurringType}</td>
+
+			    <td>₹${expense.amount}</td>
+
+			    <td>${expense.dueDay}</td>
+
+			    <td>
+
+			        <button
+			            class="btn btn-warning btn-sm me-1"
+			            onclick="editRecurringExpense(
+			                ${expense.id},
+			                '${expense.name}',
+			                '${expense.category}',
+			                '${expense.amount}',
+			                '${expense.recurringType}',
+			                '${expense.dueDay}',
+			                '${expense.reminderDaysBefore}',
+			                '${expense.startDate}',
+			                '${expense.endDate}',
+			                ${expense.variableAmount},
+			                ${expense.autoAddExpense},
+			                ${expense.active}
+			            )">
+
+			            Edit
+
+			        </button>
+
+			        <button
+			            class="btn btn-danger btn-sm"
+			            onclick="deleteRecurringExpense(${expense.id})">
+
+			            Delete
+
+			        </button>
+
+			    </td>
+
+			</tr>
+			`;
+
+
+		});
+	}
+
+
+	async function loadUnreadReminderCount() {
+
+
+		try {
+
+			const response =
+				await fetch(
+					'/reminders/unread-count',
+					{
+						headers: {
+							'Authorization':
+								`Bearer ${token}`
+						}
+					});
+
+			const count =
+				await response.json();
+
+
+			document.getElementById(
+				'notificationCount'
+			).innerText =
+				count;
+
+		} catch (error) {
+
+			console.error(
+				'Error loading reminder count',
+				error
+			);
+		}
+	}
+
+	async function markAllRemindersRead() {
+
+		try {
+
+			await fetch(
+				'/reminders/mark-all-read',
+				{
+					method: 'PUT',
+					headers: {
+						'Authorization':
+							`Bearer ${token}`
+					}
+				});
+
+			await loadUnreadReminderCount();
+
+			await loadNotifications();
+
+		} catch (error) {
+
+			console.error(
+				error
+			);
+		}
+	}
+
+	async function loadNotifications() {
+
+		try {
+
+			const response =
+				await fetch(
+					'/reminders',
+					{
+						headers: {
+							'Authorization':
+								`Bearer ${token}`
+						}
+					});
+
+			const reminders =
+				await response.json();
+
+			const container =
+				document.getElementById(
+					'notificationList'
+				);
+
+			container.innerHTML = '';
+
+			if (reminders.length === 0) {
+
+				container.innerHTML = `
+
+				    <div
+				        class="text-center text-muted p-3">
+
+				        🎉 No unread reminders
+
+				    </div>
+
+				`;
+
+				return;
+			}
+
+			reminders.forEach(reminder => {
+
+				const bgClass =
+					reminder.isRead
+						? 'bg-light'
+						: '';
+
+				const fontWeight =
+					reminder.isRead
+						? 'normal'
+						: 'bold';
+
+				const dotColor =
+					reminder.isRead
+						? '#adb5bd'
+						: '#dc3545';
+
+				container.innerHTML += `
+
+			        <div
+			            class="dropdown-item border-bottom ${bgClass}"
+			            style="
+			                cursor:pointer;
+			                padding:12px;"
+			            onclick="markReminderRead(
+			                ${reminder.id}
+			            )">
+
+			            <div
+			                class="d-flex align-items-center">
+
+			                <span
+			                    style="
+			                        width:10px;
+			                        height:10px;
+			                        border-radius:50%;
+			                        background:${dotColor};
+			                        display:inline-block;
+			                        margin-right:10px;">
+
+			                </span>
+
+			                <span
+			                    style="
+			                        font-weight:${fontWeight};">
+
+			                    ${reminder.recurringExpense.name}
+
+			                </span>
+
+			            </div>
+
+			            <small
+			                class="text-muted ms-4">
+
+			                ${reminder.message}
+
+			            </small>
+
+			        </div>
+
+			    `;
+			});
+
+		} catch (error) {
+
+			console.error(
+				'Error loading notifications',
+				error
+			);
+		}
+	}
+
+	async function markReminderRead(id) {
+
+		try {
+
+			await fetch(
+				`/reminders/${id}/read`,
+				{
+					method: 'PUT',
+					headers: {
+						'Authorization':
+							`Bearer ${token}`
+					}
+				});
+
+			await loadUnreadReminderCount();
+
+			await loadNotifications();
+
+		} catch (error) {
+
+			console.error(
+				'Error marking reminder read',
+				error
+			);
+		}
+	}
+
+
+	async function deleteRecurringExpense(id) {
+
+		if (!confirm(
+			'Delete this recurring expense?'
+		)) {
+
+			return;
+		}
+
+		await fetch(
+			`/recurring-expenses/${id}`,
+			{
+				method: 'DELETE',
+
+				headers: {
+					'Authorization':
+						`Bearer ${token}`
+				}
+			});
+
+		loadRecurringExpenses();
+	}
+
+
+
+
+
+</script>
+
+
+<!-- CHANGE PASSWORD MODAL -->
+
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+
+	<div class="modal-dialog">
+
+		<div class="modal-content">
+
+			<div class="modal-header">
+
+				<h5 class="modal-title">
+
+					Change Password
+
+				</h5>
+
+				<button type="button" class="btn-close" data-bs-dismiss="modal">
+				</button>
+
+			</div>
+
+			<div class="modal-body">
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						Current Password
+
+					</label>
+
+					<input type="password" id="currentPassword" class="form-control">
+
+				</div>
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						New Password
+
+					</label>
+
+					<input type="password" id="newPassword" class="form-control">
+
+				</div>
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						Confirm Password
+
+					</label>
+
+					<input type="password" id="confirmPassword" class="form-control">
+
+				</div>
+
+			</div>
+
+			<div class="modal-footer">
+
+				<button class="btn btn-secondary" data-bs-dismiss="modal">
+
+					Close
+
+				</button>
+
+				<button class="btn btn-primary" onclick="changePassword()">
+
+					Update Password
+
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+<!-- BUDGET MODAL -->
+
+<div class="modal fade" id="budgetModal" tabindex="-1">
+
+	<div class="modal-dialog">
+
+		<div class="modal-content">
+
+			<div class="modal-header">
+
+				<h5 class="modal-title">
+
+					Budget Management
+
+				</h5>
+
+				<button type="button" class="btn-close" data-bs-dismiss="modal">
+				</button>
+
+			</div>
+
+			<div class="modal-body">
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						Month
+
+					</label>
+
+
+					<select id="budgetMonth" class="form-select" onchange="loadBudgetForMonth()">
+
+						<option value="1">January</option>
+						<option value="2">February</option>
+						<option value="3">March</option>
+						<option value="4">April</option>
+						<option value="5">May</option>
+						<option value="6">June</option>
+						<option value="7">July</option>
+						<option value="8">August</option>
+						<option value="9">September</option>
+						<option value="10">October</option>
+						<option value="11">November</option>
+						<option value="12">December</option>
+
+					</select>
+
+
+
+				</div>
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						Year
+
+					</label>
+
+
+
+					<input type="number" id="budgetYear" class="form-control" onchange="loadBudgetForMonth()">
+
+
+
+
+
+				</div>
+
+				<div class="mb-3">
+
+					<label class="form-label">
+
+						Budget Amount
+
+					</label>
+
+					<input type="number" id="budgetAmountInput" class="form-control">
+
+				</div>
+
+
+				<div class="form-check mt-3">
+
+					<input class="form-check-input" type="checkbox" id="applyAllMonths">
+
+					<label class="form-check-label">
+
+						Apply budget to all months
+						of selected year
+
+					</label>
+
+				</div>
+
+
+
+			</div>
+
+			<div class="modal-footer">
+
+				<button class="btn btn-secondary" data-bs-dismiss="modal">
+
+					Close
+
+				</button>
+
+				<button class="btn btn-success" onclick="saveBudget()">
+
+					Save Budget
+
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+<!-- RECURRING EXPENSE MODAL -->
+
+<div class="modal fade" id="recurringExpenseModal" tabindex="-1">
+
+	<div class="modal-dialog modal-xl">
+
+		<div class="modal-content">
+
+			<div class="modal-header">
+
+				<h5 class="modal-title">
+
+					Recurring Expenses
+
+				</h5>
+
+				<button type="button" class="btn-close" data-bs-dismiss="modal">
+				</button>
+
+			</div>
+
+			<div class="modal-body">
+
+				<div class="row">
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Name
+
+						</label>
+
+						<input type="text" id="recurringName" class="form-control">
+
+					</div>
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Category
+
+						</label>
+
+						<input type="text" id="recurringCategory" class="form-control">
+
+					</div>
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Amount
+
+						</label>
+
+						<input type="number" id="recurringAmount" class="form-control">
+
+					</div>
+
+				</div>
+
+
+
+				<div class="row">
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Type
+
+						</label>
+
+						<select id="recurringType" class="form-select">
+
+							<option value="EMI">EMI</option>
+
+							<option value="SIP">SIP</option>
+
+							<option value="CREDIT_CARD">
+
+								CREDIT CARD
+
+							</option>
+
+							<option value="SUBSCRIPTION">
+
+								SUBSCRIPTION
+
+							</option>
+
+							<option value="RENT">
+
+								RENT
+
+							</option>
+
+							<option value="INSURANCE">
+
+								INSURANCE
+
+							</option>
+
+							<option value="OTHER">
+
+								OTHER
+
+							</option>
+
+						</select>
+
+					</div>
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Due Day
+
+						</label>
+
+						<input type="number" id="dueDay" min="1" max="31" class="form-control">
+
+					</div>
+
+					<div class="col-md-4 mb-3">
+
+						<label class="form-label">
+
+							Reminder Days Before
+
+						</label>
+
+						<input type="number" id="reminderDays" class="form-control">
+
+					</div>
+
+				</div>
+
+
+
+				<div class="row">
+
+					<div class="col-md-6 mb-3">
+
+						<label class="form-label">
+
+							Start Date
+
+						</label>
+
+						<input type="date" id="startDate" class="form-control">
+
+					</div>
+
+					<div class="col-md-6 mb-3">
+
+						<label class="form-label">
+
+							End Date
+
+						</label>
+
+						<input type="date" id="endDate" class="form-control">
+
+					</div>
+
+				</div>
+
+
+
+				<div class="row">
+
+					<div class="col-md-4">
+
+						<div class="form-check">
+
+							<input type="checkbox" class="form-check-input" id="variableAmount">
+
+							<label class="form-check-label">
+
+								Variable Amount
+
+							</label>
+
+						</div>
+
+					</div>
+
+					<div class="col-md-4">
+
+						<div class="form-check">
+
+							<input type="checkbox" class="form-check-input" id="autoAddExpense">
+
+							<label class="form-check-label">
+
+								Auto Add Expense
+
+							</label>
+
+						</div>
+
+					</div>
+
+					<div class="col-md-4">
+
+						<div class="form-check">
+
+							<input type="checkbox" class="form-check-input" id="activeStatus" checked>
+
+							<label class="form-check-label">
+
+								Active
+
+							</label>
+
+						</div>
+
+					</div>
+
+				</div>
+
+
+
+				<div class="mt-4">
+
+					<button class="btn btn-success" onclick="saveRecurringExpense()">
+
+						Save Recurring Expense
+
+					</button>
+
+				</div>
+
+
+
+				<hr>
+
+				<h5>
+
+					Existing Recurring Expenses
+
+				</h5>
+
+				<div class="table-responsive">
+
+					<table class="table table-bordered">
+
+						<thead>
+
+							<tr>
+
+								<th>Name</th>
+
+								<th>Type</th>
+
+								<th>Amount</th>
+
+								<th>Due Day</th>
+
+								<th>Action</th>
+							</tr>
+
+						</thead>
+
+						<tbody id="recurringExpenseTableBody">
+
+						</tbody>
+
+					</table>
+
+				</div>
+
+			</div>
+
+
+
+		</div>
+
+	</div>
+
+</div>
+
+<!-- PAYMENT CENTER MODAL -->
+
+<div class="modal fade" id="paymentCenterModal" tabindex="-1">
+
+	<div class="modal-dialog modal-xl">
+
+		<div class="modal-content">
+
+			<div class="modal-header">
+
+				<h4 class="modal-title fw-bold">
+
+					📅 Payment Center
+
+				</h4>
+
+				<button type="button" class="btn-close" data-bs-dismiss="modal">
+
+				</button>
+
+			</div>
+
+			<div class="modal-body">
+
+				<!-- PAYMENT SUMMARY -->
+
+				<div class="card shadow-sm mb-3">
+
+					<div class="card-body">
+
+						<h5 class="card-title">
+
+							📊 Payment Summary
+
+						</h5>
+
+
+
+						<div class="row g-3">
+
+							<div class="col-md-3">
+
+								<div class="card border-0 shadow-sm">
+
+									<div class="card-body text-center">
+
+										<h2 id="modalTotalUpcomingCount" class="text-primary fw-bold">
+
+											0
+
+										</h2>
+
+										<div class="text-muted">
+
+											Upcoming Payments
+
+										</div>
+
+									</div>
+
+								</div>
+
+							</div>
+
+							<div class="col-md-3">
+
+								<div class="card border-0 shadow-sm">
+
+									<div class="card-body text-center">
+
+										<h2 id="modalDueThisWeekCount" class="text-warning fw-bold">
+
+											0
+
+										</h2>
+
+										<div class="text-muted">
+
+											Due This Week
+
+										</div>
+
+									</div>
+
+								</div>
+
+							</div>
+
+							<div class="col-md-3">
+
+								<div class="card border-0 shadow-sm">
+
+									<div class="card-body text-center">
+
+										<h2 id="modalOverdueCount" class="text-danger fw-bold">
+
+											0
+
+										</h2>
+
+										<div class="text-muted">
+
+											Overdue
+
+										</div>
+
+									</div>
+
+								</div>
+
+							</div>
+
+
+							<div class="col-md-3">
+								<div class="card border-0 shadow-sm">
+									<div class="card-body text-center">
+										<h6>Total Amount Due</h6>
+										<h4 id="modalTotalAmountDue">
+											₹0
+										</h4>
+									</div>
+								</div>
+							</div>
+
+						</div>
+
+
+
+
+
+					</div>
+
+				</div>
+
+				<!-- UPCOMING PAYMENTS -->
+
+				<div class="card shadow-sm">
+
+					<div class="card-body">
+
+						<div class="d-flex
+						            justify-content-between
+						            align-items-center
+						            mb-3">
+
+							<h5 class="fw-bold mb-0">
+
+								📅 Upcoming Payments
+
+							</h5>
+
+							<span class="badge bg-primary">
+
+								Active Payments
+
+							</span>
+
+						</div>
+
+						<div id="modalUpcomingPaymentsContainer">
+
+							<div class="text-muted">
+
+								No upcoming payments
+
+							</div>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+
+
+</body>
+
+</html>
